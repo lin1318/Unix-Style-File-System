@@ -20,7 +20,7 @@ This is an inode-based Unix-style file system.
 
 1. Use "format" to format the file system. 
    - i.e. format
-2.  Use "createFile \<fileName\> \<fileSize\> " to create File with its name and size(in KB)
+3. Use "createFile \<fileName\> \<fileSize\> " to create File with its name and size(in KB)
    - i.e. createFile  /dir/a.txt 10
 3. Use "deleteFile \<filename\> " to delete a file
    - i.e. deleteFile /dir/a.txt
