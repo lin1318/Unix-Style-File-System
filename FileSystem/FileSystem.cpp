@@ -2,13 +2,14 @@
 //
 
 #include "pch.h"
-#include <iostream>
+#include<iostream>
 #include<ctime>
 #include<string>
 #include<vector>
 #include<iomanip>
 #include<fstream>
 using namespace std;
+
 #define BLOCK_SIZE 1024
 #define BLOCK_NUM 16384
 #define INODE_SIZE 128
@@ -116,10 +117,10 @@ int getDirAddr(inode currInode,int num)	//return item address
 		return addr;
 	}
 }
-bool check(string path)  //check whether the path looks like this "/c"
+bool check(string path)  //check whether the path looks like this "/c/"
 {
-	if (path == "")
-		return true;
+	if (path == "/")
+		return false;
 	if (path[int(path.size()) - 1] == '/')
 		path.pop_back();
 	for (int i = 1; i < path.size(); i++)
@@ -132,8 +133,6 @@ int getPathInodeAddr(string path, int currAddr,bool goBottom,bool getFile) //pat
 	string nextpath = "";
 	int i;
 	if (check(path)&&(!goBottom))
-		return currAddr;
-	if (path.empty())
 		return currAddr;
 	if (path == "/")
 		return currAddr;
@@ -157,18 +156,15 @@ int getPathInodeAddr(string path, int currAddr,bool goBottom,bool getFile) //pat
 		fs.read((char*)&tmpInode, sizeof(inode));
 		if (string(tmpItem.itemname) == nextpath)
 		{
-			if ((tmpInode.type == DIR) && ((path!=""&&path!="/")|| !getFile))
+			if (tmpInode.type == FILE && goBottom&&check(path))
 			{
-				return getPathInodeAddr(path, tmpItem.inodeAddr, goBottom, getFile);
+				return tmpItem.inodeAddr;
 			}
-			else
+			if (tmpInode.type == DIR)
 			{
-				if (goBottom&&getFile && (path==""||path=="/"))
-				{
-					return tmpItem.inodeAddr;
-				}
-				else
+				if (goBottom&&check(path) && getFile)
 					continue;
+				return getPathInodeAddr(path, tmpItem.inodeAddr, goBottom, getFile);
 			}
 		}
 	}
@@ -306,7 +302,7 @@ bool addDir(string path, bool flag)	//flag means whether it is the first DIR (ha
 			return false;
 		}
 		string dirname = "";
-		for (int i = int(path.size()) - 1; i >= 0; i--)
+		for (int i = int(path.size()) - 2; i >= 0; i--)
 			if (path[i] != '/')
 				dirname += path[i];
 			else
@@ -335,7 +331,7 @@ bool addDir(string path, bool flag)	//flag means whether it is the first DIR (ha
 			inode tmpinode;
 			fs.seekg(tmpdir.inodeAddr, ios::beg);
 			fs.read((char*)&tmpinode, sizeof(inode));
-			if (strcmp(tmpdir.itemname, dirname.c_str()) == 0 && tmpinode.type == DIR)	//same name
+			if (strcmp(tmpdir.itemname, dirname.c_str()) == 0)	//same name
 			{
 				cout << "has the same name" << endl;
 				return false;
@@ -549,15 +545,8 @@ void Load()	//load superblock inode-map block-map
 void cd(string path)
 {
 	int newInodeAddr;
-	if (path[0] == '/')		//absolute path
-	{
-		newInodeAddr= getPathInodeAddr(path, sb.inodeBlockStartAddr,true,false);
-	}
-	else                  //relative path
-	{
-		path= "/" + path;
-		newInodeAddr = getPathInodeAddr(path, currDirInodeAddr,true,false);
-	}
+	path = formatPath(path);
+	newInodeAddr= getPathInodeAddr(path, sb.inodeBlockStartAddr,true,false);
 	if (newInodeAddr == -1)
 	{
 		cout << "path error" << endl;
@@ -654,7 +643,7 @@ bool addFile(string path,int size)
 		inode tmpinode;
 		fs.seekg(tmpdir.inodeAddr, ios::beg);
 		fs.read((char*)&tmpinode, sizeof(inode));
-		if (strcmp(tmpdir.itemname, filename.c_str()) == 0&&tmpinode.type==FILE)	//same name and type
+		if (strcmp(tmpdir.itemname, filename.c_str()) == 0)	//same name and type
 		{
 			cout << "has the same name" << endl;
 			return false;
@@ -956,7 +945,7 @@ int main()
 	while (true)
 	{
 		fs.open(FILENAME, ios_base::binary | ios_base::in | ios_base::out);
-		cout << pwd() << " ";
+		cout << pwd() << "> ";
 		string command;
 		string parameter;
 		cin >> command;
@@ -992,10 +981,7 @@ int main()
 			string dir;
 			int size;
 			cin >> dir >> size;
-			if (addFile(dir, size * 1024))
-			{
-				printSuperBlock();
-			}
+			addFile(dir, size * 1024);
 		}
 		else if (command == "cat")
 		{
@@ -1020,6 +1006,11 @@ int main()
 			string path;
 			cin >> path;
 			rmDir(path);
+		}
+		else if (command == "exit")
+		{
+			fs.close();
+			return 0;
 		}
 		else{
 			cout << "Comand not found" << endl;
