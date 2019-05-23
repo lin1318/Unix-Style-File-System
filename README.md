@@ -1,6 +1,6 @@
 
 
-# Unix-style-file-system
+# Unix-Style-File-System
 
 This is an inode-based Unix-style file system.
 
