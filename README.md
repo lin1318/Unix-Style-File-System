@@ -1,8 +1,8 @@
 
 
-# Unix-Style-File-System
+# Unix-Style File System
 
-This is an inode-based Unix-style file system.
+This is an inode-based Unix-Style file system.
 
 
 
