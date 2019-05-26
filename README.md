@@ -37,3 +37,6 @@ This is an inode-based Unix-Style file system.
 9. Use "cat fileName" to show the content of the file.
    - i.e. cat file
 
+## License
+Copyright (c) 2019 Yangzhou Lin
+Licensed under the [MIT License](https://opensource.org/licenses/MIT).
